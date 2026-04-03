@@ -1,16 +1,16 @@
 :root {
   --bg-color: #0f172a;
   --text-main: #f8fafc;
-  --bg-gradient: linear-gradient(135deg, #09090b 0%, #171720 100%);
-  --chat-bg: rgba(30, 41, 59, 0.4);
+  --bg-gradient: linear-gradient(135deg, #09090b 0%, #061e22 100%);
+  --chat-bg: rgba(15, 35, 35, 0.4);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  --bot-msg-bg: rgba(51, 65, 85, 0.6);
-  --user-msg-bg: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  --input-bg: rgba(15, 23, 42, 0.7);
-  --input-border: rgba(59, 130, 246, 0.5);
-  --primary-color: #3b82f6;
-  --primary-hover: #2563eb;
+  --bot-msg-bg: rgba(20, 50, 45, 0.6);
+  --user-msg-bg: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  --input-bg: rgba(15, 30, 35, 0.7);
+  --input-border: rgba(6, 182, 212, 0.5);
+  --primary-color: #06b6d4;
+  --primary-hover: #0891b2;
   --placeholder: #94a3b8;
 }
 
