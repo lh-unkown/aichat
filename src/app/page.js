@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { FaPaperPlane, FaUser, FaPaperclip, FaTimes, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage } from "react-icons/fa";
+import { auth, provider, db } from "../lib/firebase";
+import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { FaPaperPlane, FaUser, FaPaperclip, FaTimes, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage, FaGoogle, FaSignOutAlt } from "react-icons/fa";
 import { BsStars } from "react-icons/bs";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
@@ -17,6 +20,11 @@ export default function ChatBot() {
   const [attachment, setAttachment] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Auth Config States
+  const [user, setUser] = useState(null);
+  const [isGuest, setIsGuest] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -94,6 +102,58 @@ export default function ChatBot() {
     scrollToBottom();
   }, [messages, isLoading]);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setIsGuest(false);
+        await loadChatHistory(currentUser.uid);
+      } else {
+        setUser(null);
+      }
+      setAuthChecking(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const loadChatHistory = async (uid) => {
+    try {
+      const docRef = doc(db, "chats", uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const history = docSnap.data().messages;
+        if (history && history.length > 0) setMessages(history);
+      }
+    } catch (e) {
+      console.error("Error loading cloud history:", e);
+    }
+  };
+
+  const saveChatHistory = async (newMessagesList) => {
+    if (!auth.currentUser) return;
+    try {
+      const docRef = doc(db, "chats", auth.currentUser.uid);
+      await setDoc(docRef, { messages: newMessagesList }, { merge: true });
+    } catch (e) {
+      console.error("Error saving to cloud:", e);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setError(null);
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      setError("Login failed. Check popup blockers or connection.");
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setMessages([{ role: "bot", content: "ආයුබෝවන්! මම ඔබේ සිංහල AI සහායකයා. මට ඔබට උදව් කළ හැකි දෙයක් තිබේද?" }]);
+    setIsGuest(false);
+  };
+
   const handleSend = async () => {
     if (!input.trim() && !attachment) return;
     
@@ -131,7 +191,9 @@ export default function ChatBot() {
       
       if (data.error) throw new Error(data.error);
 
-      setMessages((prev) => [...prev, { role: "bot", content: data.content }]);
+      const finalMessages = [...newMessages, { role: "bot", content: data.content }];
+      setMessages(finalMessages);
+      saveChatHistory(finalMessages);
     } catch (err) {
       console.error(err);
       setError(`Error: ${err.message} (කරුණාකර නැවත උත්සාහ කරන්න)`);
@@ -148,10 +210,50 @@ export default function ChatBot() {
     }
   };
 
+  if (authChecking) {
+    return (
+      <main className={styles.mainContainer}>
+         <div className={styles.ambientGlow} />
+         <div style={{ color: '#06b6d4', zIndex: 10, fontSize: '1.2rem', letterSpacing: '2px' }}>
+            Initializing Core_SL...
+         </div>
+      </main>
+    );
+  }
+
+  if (!user && !isGuest) {
+    return (
+      <main className={styles.mainContainer}>
+        <div className={styles.ambientGlow} />
+        <div className={styles.splashWindow}>
+           <h1>Sys_Core_SL</h1>
+           <p>Sign in to permanently save your chat history to the cloud, or proceed anonymously for a volatile session.</p>
+           
+           {error && <div className={styles.errorLabel}>{error}</div>}
+
+           <div className={styles.splashActions}>
+              <button className={styles.googleBtn} onClick={handleGoogleLogin}>
+                 <FaGoogle /> Sign in with Google
+              </button>
+              <button className={styles.guestBtn} onClick={() => setIsGuest(true)}>
+                 Initialize as Guest
+              </button>
+           </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className={styles.mainContainer}>
       <div className={styles.ambientGlow} />
       
+      {user && (
+         <button className={styles.logoutBtn} onClick={handleLogout} title="Sign Out">
+           <FaSignOutAlt /> Disconnect
+         </button>
+      )}
+
       <div className={styles.chatWindow}>
         
         {/* Futuristic AI Orb Header Component */}
