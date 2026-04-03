@@ -20,7 +20,7 @@ export async function POST(req) {
       return Response.json({ error: "Invalid payload." }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
 
     const systemInstruction = 
       "You are a helpful and intelligent AI assistant. " +
@@ -55,18 +55,14 @@ export async function POST(req) {
     }
 
     const modelNames = [
-      "gemini-2.5-flash",
-      "gemini-2.0-flash",
-      "gemini-1.5-flash-latest",
-      "gemini-1.5-pro-latest",
-      "gemini-exp-1206",
       "gemini-1.5-flash",
-      "gemini-1.0-pro"
+      "gemini-1.5-pro"
     ];
 
     let result = null;
     let fallbackError = null;
     let successfulModel = "";
+    const errors = [];
 
     for (const name of modelNames) {
       try {
@@ -75,12 +71,14 @@ export async function POST(req) {
         successfulModel = name;
         break; 
       } catch (e) {
+        errors.push(`${name} failed: ${e.message}`);
         fallbackError = e;
       }
     }
 
     if (!result) {
-      throw fallbackError || new Error("All model fallbacks failed.");
+      console.error("All models failed:", errors);
+      throw new Error(`All models failed: ${errors.join(" | ")}`);
     }
 
     const responseText = result.response.text();
