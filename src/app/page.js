@@ -43,17 +43,23 @@ export default function ChatBot() {
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to communicate with AI.");
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        throw new Error("Failed to parse server response.");
       }
 
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to communicate with AI.");
+      }
+      
       if (data.error) throw new Error(data.error);
 
       setMessages((prev) => [...prev, { role: "bot", content: data.content }]);
     } catch (err) {
       console.error(err);
-      setError("සමාවෙන්න, සම්බන්ධතා දෝෂයක් ඇතිවිය. කරුණාකර නැවත උත්සාහ කරන්න.");
+      setError(`Error: ${err.message} (කරුණාකර නැවත උත්සාහ කරන්න)`);
     } finally {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
