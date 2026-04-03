@@ -20,7 +20,7 @@ export async function POST(req) {
       return Response.json({ error: "Invalid payload." }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     // The system instruction forces it to be a Sinhala Chatbot.
     const systemInstruction = 
