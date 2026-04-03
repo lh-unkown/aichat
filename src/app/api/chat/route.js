@@ -77,8 +77,22 @@ export async function POST(req) {
     }
 
     if (!result) {
+      let availableModels = "Could not fetch ListModels.";
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (data && data.models) {
+          availableModels = data.models.map(m => m.name).join(", ");
+        } else {
+          availableModels = JSON.stringify(data);
+        }
+      } catch (err) {
+        availableModels = "ListModels fetch failed.";
+      }
       console.error("All models failed:", errors);
-      throw new Error(`All models failed: ${errors.join(" | ")}`);
+      console.error("Available models for this key:", availableModels);
+      throw new Error(`Models failed. Available to you: ${availableModels}`);
     }
 
     const responseText = result.response.text();
