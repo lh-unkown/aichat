@@ -37,8 +37,37 @@ export async function POST(req) {
     }
     promptText += "Assistant: ";
 
-    const result = await model.generateContent(promptText);
+    const modelNames = [
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-pro-latest",
+      "gemini-exp-1206",
+      "gemini-1.5-flash",
+      "gemini-1.0-pro"
+    ];
+
+    let result = null;
+    let fallbackError = null;
+    let successfulModel = "";
+
+    for (const name of modelNames) {
+      try {
+        const model = genAI.getGenerativeModel({ model: name });
+        result = await model.generateContent(promptText);
+        successfulModel = name;
+        break; 
+      } catch (e) {
+        fallbackError = e;
+      }
+    }
+
+    if (!result) {
+      throw fallbackError || new Error("All model fallbacks failed.");
+    }
+
     const responseText = result.response.text();
+    console.log(`Successfully used model: ${successfulModel}`);
 
     return Response.json({ role: "bot", content: responseText });
   } catch (error) {
